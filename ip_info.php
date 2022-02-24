@@ -1,11 +1,23 @@
 <?php
+// Uncomment for debugging
+// ini_set('display_errors', true);
+// error_reporting(E_ALL);
+$api_key = 'YOUR_ABUSEIPDB_API_KEY';
+$abuseipdb_endpoint = 'https://api.abuseipdb.com/api/v2/check';
+
+$headers =  array(
+    'Key: ' . $api_key,
+    'Accept: application/json'
+);
 $ch = curl_init();
 if($_SERVER["REQUEST_METHOD"] == "POST") {
 
     $url = $_POST['ip'];
     $_SESSION['url'] = $url;
-    curl_setopt($ch, CURLOPT_URL, "https://www.abuseipdb.com/check/$url/json?key=PpDNjt74E2jaBnXv0qmq6gHPEJimDd0v0sIOPZ1x&days=90");
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_URL, ($abuseipdb_endpoint . '?ipAddress=' . $url . '&days=90' . '&verbose'));            
+    curl_setopt($ch, CURLOPT_HTTPGET, 1);
 
     $result = curl_exec($ch);
     $_SESSION['res'] = $result;
@@ -14,7 +26,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
     }
     curl_close ($ch);
     $result1 = json_decode($result, true);
-    $result1 = $result1[0];
+    $result1 = $result1['data'];
     $_SESSION['result1'] = $result1;
     unset($_POST);
 }
@@ -50,8 +62,8 @@ $res = $_SESSION['res'];
         if ($result2) {
             echo
                 '
-<h4>Details of IP <strong>' . $result2["ip"] . '</strong> are,</h4><br/>
-<h4>The IP with ISO code <strong>&quot;' . $result2["isoCode"] . '&quot;</strong> belongs to <strong>' . $result2["country"] . '</strong></h4><br/>';
+<h4>Details of IP <strong>' . $result2["ipAddress"] . '</strong> are,</h4><br/>
+<h4>The IP with ISO code <strong>&quot;' . $result2["countryCode"] . '&quot;</strong> belongs to <strong>' . $result2["countryName"] . '</strong></h4><br/>';
             echo '<h4>The IP is <strong>';  echo $result2["isWhitelisted"] ? 'Whitelisted' : 'Blacklisted' ; echo '</strong></h4><br/>';
             echo '<h4>Abuse level Confidence score is <strong>' . $result2["abuseConfidenceScore"] . '</strong></h4><br/><br/>';
             echo '<p>Confidence of abuse is a rating (scaled 0-100) of how confident we are, based on user reports, that an IP address is entirely malicious. So a rating of 100 means we are sure an IP address is malicious, while a rating of 0 means we have no reason to suspect it is malicious.</p><br/><br/>';
